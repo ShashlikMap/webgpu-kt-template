@@ -131,6 +131,9 @@ class WebGpuAPI {
     private var gpuAdapter: GPUAdapter? = null
     private var gpuDevice: GPUDevice? = null
     private var gpuSurface: GPUSurface? = null
+    private var gpuSurfaceConfiguration: GPUSurfaceConfiguration? = null
+
+    private var multisampleView: MultisampleView? = null
     private var gpuRenderPipeline: GPURenderPipeline? = null
     private var isPrepared = false
 
@@ -196,13 +199,13 @@ class WebGpuAPI {
             width = width,
             height = height
         )
+        gpuSurfaceConfiguration = surfaceConfiguration
         currentSurface.configure(surfaceConfiguration)
     }
 
     private fun createRenderPipeline(context: Context) {
         val currentDevice = gpuDevice ?: return
-        val currentSurface = gpuSurface ?: return
-        val currentAdapter = gpuAdapter ?: return
+        val surfaceConfiguration = gpuSurfaceConfiguration ?: return
 
         val shader = context.resources.openRawResource(R.raw.shader).bufferedReader().readText()
         val shaderModuleDescriptor = GPUShaderModuleDescriptor().apply {
@@ -211,13 +214,8 @@ class WebGpuAPI {
 
         val module = currentDevice.createShaderModule(shaderModuleDescriptor)
 
-        val capabilities = currentSurface.getCapabilities(currentAdapter)
-        val textureFormat = capabilities.formats.firstOrNull() ?: return
-
-        val colorTargetState = GPUColorTargetState(
-            format = textureFormat,
-            blend = GPUBlendState().alphaBlending
-        )
+        val colorTargetState = GPUColorTargetState(format = surfaceConfiguration.format,
+            blend = GPUBlendState().alphaBlending)
         val fragmentState = GPUFragmentState(
             module = module,
             targets = arrayOf(colorTargetState),
@@ -230,6 +228,9 @@ class WebGpuAPI {
             attributes = SHADER_STRUCT.gpuVertexAttributes
         )
 
+        val multisampleView = MultisampleView(currentDevice, surfaceConfiguration)
+        this.multisampleView = multisampleView
+
         val renderPipelineDescriptor = GPURenderPipelineDescriptor(
             vertex = GPUVertexState(
                 module = module,
@@ -241,7 +242,8 @@ class WebGpuAPI {
                 GPUPipelineLayoutDescriptor(
                     bindGroupLayouts = arrayOf(globalUniformBindGroupLayout!!)
                 )
-            )
+            ),
+            multisample = multisampleView.multisampleState
         )
 
         gpuRenderPipeline = currentDevice.createRenderPipeline(renderPipelineDescriptor)
@@ -326,10 +328,12 @@ class WebGpuAPI {
         val currentSurface = gpuSurface ?: return
         val currentDevice = gpuDevice ?: return
         val currentRenderPipeline = gpuRenderPipeline ?: return
+        val multisampleView = this.multisampleView ?: return
 
         val surfaceTexture = currentSurface.getCurrentTexture()
         val renderPassColorAttachment = GPURenderPassColorAttachment(
-            view = surfaceTexture.texture.createView(),
+            view = multisampleView.textureView,
+            resolveTarget = surfaceTexture.texture.createView(),
             loadOp = LoadOp.Clear,
             storeOp = StoreOp.Store,
             clearValue = GPUColor(0.0, 0.0, 0.5, 1.0) // Blue background for visibility
