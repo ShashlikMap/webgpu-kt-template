@@ -6,7 +6,6 @@ import androidx.webgpu.GPUMultisampleState
 import androidx.webgpu.GPUSurfaceConfiguration
 import androidx.webgpu.GPUTextureDescriptor
 import androidx.webgpu.GPUTextureView
-import androidx.webgpu.TextureDimension
 import androidx.webgpu.TextureUsage
 
 class MultisampleView(
@@ -30,9 +29,7 @@ class MultisampleView(
         val textureDescriptor = GPUTextureDescriptor(
             usage = TextureUsage.RenderAttachment,
             size = extent,
-            dimension = TextureDimension._2D,
             format = gpuSurfaceConfiguration.format,
-            mipLevelCount = 1,
             sampleCount = SAMPLE_COUNT,
         )
 
