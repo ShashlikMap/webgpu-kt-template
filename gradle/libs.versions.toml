@@ -5,7 +5,7 @@ coreKtx = "1.17.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.2"
 composeBom = "2024.09.00"
-webgpu = "1.0.0-alpha02"
+webgpu = "1.0.0-alpha03"
 kotlinMath = "1.6.0"
 
 [libraries]
