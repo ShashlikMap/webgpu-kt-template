@@ -51,4 +51,5 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.webgpu)
     implementation(libs.kotlin.math)
+    implementation(libs.obj)
 }

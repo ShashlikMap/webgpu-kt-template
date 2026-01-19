@@ -6,6 +6,8 @@ import android.opengl.Matrix
 import android.view.Surface
 import androidx.webgpu.BufferBindingType
 import androidx.webgpu.BufferUsage
+import androidx.webgpu.CullMode
+import androidx.webgpu.FrontFace.Companion.CW
 import androidx.webgpu.GPU
 import androidx.webgpu.GPUAdapter
 import androidx.webgpu.GPUBindGroup
@@ -26,6 +28,7 @@ import androidx.webgpu.GPUInstance
 import androidx.webgpu.GPUInstanceDescriptor
 import androidx.webgpu.GPUInstanceLimits
 import androidx.webgpu.GPUPipelineLayoutDescriptor
+import androidx.webgpu.GPUPrimitiveState
 import androidx.webgpu.GPURenderPassColorAttachment
 import androidx.webgpu.GPURenderPassDescriptor
 import androidx.webgpu.GPURenderPipeline
@@ -38,6 +41,7 @@ import androidx.webgpu.GPUSurfaceDescriptor
 import androidx.webgpu.GPUSurfaceSourceAndroidNativeWindow
 import androidx.webgpu.GPUVertexBufferLayout
 import androidx.webgpu.GPUVertexState
+import androidx.webgpu.IndexFormat
 import androidx.webgpu.InstanceFeatureName
 import androidx.webgpu.LoadOp
 import androidx.webgpu.ShaderStage
@@ -47,9 +51,8 @@ import androidx.webgpu.VertexFormat.Companion.Float32x4
 import androidx.webgpu.VertexStepMode
 import androidx.webgpu.helper.Util
 import com.shashlikmap.webgpukt.R
+import com.shashlikmap.webgpukt.mesh.Mesh
 import com.shashlikmap.webgpukt.webgpu.utils.GPUBufferDescriptorInit
-import com.shashlikmap.webgpukt.webgpu.utils.Vec3
-import com.shashlikmap.webgpukt.webgpu.utils.Vec4
 import com.shashlikmap.webgpukt.webgpu.utils.alphaBlending
 import com.shashlikmap.webgpukt.webgpu.utils.byteSize
 import com.shashlikmap.webgpukt.webgpu.utils.createBufferInit
@@ -64,7 +67,7 @@ import dev.romainguy.kotlin.math.rotation
  * Wrapper around androidx.webgpu
  */
 @SuppressLint("RestrictedApi")
-class WebGpuAPI {
+class WebGpuAPI(private val mesh: Mesh) {
     companion object {
         const val WEBGPU_C_BUNDLED = "webgpu_c_bundled"
 
@@ -87,40 +90,10 @@ class WebGpuAPI {
             1.0f
         )
 
-        val INITIAL_EYE = Float4(0.0f, 0.0f, 5.0f, 1.0f)
+        val INITIAL_EYE = Float4(0.0f, 2.0f, 3.0f, 1.0f)
 
         // TODO Code gen to struct prototype?
-        val SHADER_STRUCT = arrayOf(Float32x3, Float32x4)
-
-        private const val QUAD_ALPHA = 1.0f
-
-        val GEOMETRY =
-            listOf(
-                Vertex(
-                    position = Vec3(-1.0f, -1.0f, 0.0f),
-                    color = Vec4(1.0f, 1.0f, 1.0f, QUAD_ALPHA)
-                ),
-                Vertex(
-                    position = Vec3(-1.0f, 1.0f, 0.0f),
-                    color = Vec4(1.0f, 1.0f, 1.0f, QUAD_ALPHA)
-                ),
-                Vertex(
-                    position = Vec3(1.0f, -1.0f, 0.0f),
-                    color = Vec4(1.0f, 1.0f, 1.0f, QUAD_ALPHA)
-                ),
-                Vertex(
-                    position = Vec3(-1.0f, 1.0f, 0.0f),
-                    color = Vec4(0.0f, 1.0f, 1.0f, QUAD_ALPHA)
-                ),
-                Vertex(
-                    position = Vec3(1.0f, 1.0f, 0.0f),
-                    color = Vec4(0.0f, 1.0f, 1.0f, QUAD_ALPHA)
-                ),
-                Vertex(
-                    position = Vec3(1.0f, -1.0f, 0.0f),
-                    color = Vec4(0.0f, 1.0f, 1.0f, QUAD_ALPHA)
-                )
-            )
+        val SHADER_STRUCT = arrayOf(Float32x3, Float32x3, Float32x4)
 
         init {
             System.loadLibrary(WEBGPU_C_BUNDLED)
@@ -136,7 +109,8 @@ class WebGpuAPI {
 
     var rotationAngle = 0.0f
 
-    private var quadVertexBuffer: GPUBuffer? = null
+    private var meshVertexBuffer: GPUBuffer? = null
+    private var meshIndexBuffer: GPUBuffer? = null
     private var globalUniformBuffer: GPUBuffer? = null
     private var globalUniformBindGroupLayout: GPUBindGroupLayout? = null
     private var globalUniformBindGroup: GPUBindGroup? = null
@@ -146,6 +120,7 @@ class WebGpuAPI {
 
     private suspend fun prepare() {
         if (isPrepared) return
+
         val instanceDescriptor = GPUInstanceDescriptor(
             requiredFeatures = intArrayOf(InstanceFeatureName.TimedWaitAny), requiredLimits =
                 GPUInstanceLimits()
@@ -155,7 +130,7 @@ class WebGpuAPI {
         gpuDevice = gpuAdapter?.requestDevice()
 
         createGlobalUniform()
-        createQuadVertexBuffer()
+        createMeshBuffers()
 
         isPrepared = true
     }
@@ -237,6 +212,7 @@ class WebGpuAPI {
                 buffers = arrayOf(vertexBufferLayout)
             ),
             fragment = fragmentState,
+            primitive = GPUPrimitiveState(frontFace = CW, cullMode = CullMode.Back),
             layout = currentDevice.createPipelineLayout(
                 GPUPipelineLayoutDescriptor(
                     bindGroupLayouts = arrayOf(globalUniformBindGroupLayout!!)
@@ -278,13 +254,20 @@ class WebGpuAPI {
         )
     }
 
-    private fun createQuadVertexBuffer() {
+    private fun createMeshBuffers() {
         val currentDevice = gpuDevice ?: return
 
-        quadVertexBuffer = currentDevice.createBufferInit(
+        meshVertexBuffer = currentDevice.createBufferInit(
             GPUBufferDescriptorInit(
                 usage = BufferUsage.Vertex,
-                content = GEOMETRY.toByteBuffer(),
+                content = mesh.vertices.toByteBuffer(),
+            )
+        )
+
+        meshIndexBuffer = currentDevice.createBufferInit(
+            GPUBufferDescriptorInit(
+                usage = BufferUsage.Index,
+                content = mesh.indices.toIntArray().toByteBuffer(),
             )
         )
     }
@@ -345,8 +328,9 @@ class WebGpuAPI {
         renderPassEncoder.apply {
             setPipeline(currentRenderPipeline)
             setBindGroup(0, globalUniformBindGroup!!)
-            setVertexBuffer(0, quadVertexBuffer!!)
-            draw(vertexCount = GEOMETRY.size)
+            setVertexBuffer(0, meshVertexBuffer!!)
+            setIndexBuffer(meshIndexBuffer!!, format = IndexFormat.Uint32)
+            drawIndexed(mesh.indices.size)
             end()
         }
 
