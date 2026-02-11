@@ -12,10 +12,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.shashlikmap.webgpukt.mesh.Mesh
 
 @Composable
-fun WebGPUView() {
-    val api = remember { WebGpuAPI() }
+fun WebGPUView(mesh: Mesh) {
+    val api = remember { WebGpuAPI(mesh) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {

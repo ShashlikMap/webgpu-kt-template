@@ -7,6 +7,7 @@ activityCompose = "1.12.2"
 composeBom = "2024.09.00"
 webgpu = "1.0.0-alpha03"
 kotlinMath = "1.6.0"
+obj = "0.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -19,6 +20,7 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-webgpu = { group = "androidx.webgpu", name = "webgpu", version.ref = "webgpu" }
 kotlin-math = { group = "dev.romainguy", name = "kotlin-math", version.ref = "kotlinMath" }
+obj = { group = "de.javagl", name = "obj", version.ref = "obj" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
