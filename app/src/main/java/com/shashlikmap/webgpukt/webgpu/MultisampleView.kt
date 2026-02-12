@@ -26,13 +26,10 @@ class MultisampleView(
             height = gpuSurfaceConfiguration.height,
         )
 
-        val textureDescriptor = GPUTextureDescriptor(
-            usage = TextureUsage.RenderAttachment,
-            size = extent,
-            format = gpuSurfaceConfiguration.format,
-            sampleCount = SAMPLE_COUNT,
-        )
-
+        val textureDescriptor = GPUTextureDescriptor.Builder(TextureUsage.RenderAttachment, extent)
+            .setFormat(gpuSurfaceConfiguration.format)
+            .setSampleCount(SAMPLE_COUNT)
+            .build()
         textureView = device.createTexture(textureDescriptor).createView()
     }
 }
