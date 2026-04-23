@@ -47,7 +47,7 @@ import androidx.webgpu.VertexFormat.Companion.Unorm8x4BGRA
 /**
  * Return the byte size of [VertexFormat]
  */
-val @VertexFormat Int.byteSize: Long
+val @VertexFormat.Type Int.byteSize: Long
     get() {
         return when (this) {
             Uint8, Sint8, Unorm8, Snorm8 -> 1L
@@ -60,13 +60,13 @@ val @VertexFormat Int.byteSize: Long
         }
     }
 
-val Array<@VertexFormat Int>.byteSize: Long
+val Array<@VertexFormat.Type Int>.byteSize: Long
     get() = sumOf { it.byteSize }
 
 /**
  * Generates [GPUVertexAttribute] array for the list of [VertexFormat]
  */
-val Array<@VertexFormat Int>.gpuVertexAttributes: Array<GPUVertexAttribute>
+val Array<@VertexFormat.Type Int>.gpuVertexAttributes: Array<GPUVertexAttribute>
     get() = foldIndexed(arrayListOf<GPUVertexAttribute>()) { index, acc, type ->
         val offset = acc.lastOrNull()?.let { attr ->
             attr.offset + attr.format.byteSize

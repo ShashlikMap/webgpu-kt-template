@@ -1,6 +1,5 @@
 package com.shashlikmap.webgpukt.webgpu
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.opengl.Matrix
 import android.view.Surface
@@ -66,7 +65,6 @@ import dev.romainguy.kotlin.math.rotation
 /**
  * Wrapper around androidx.webgpu
  */
-@SuppressLint("RestrictedApi")
 class WebGpuAPI(private val mesh: Mesh) {
     companion object {
         const val WEBGPU_C_BUNDLED = "webgpu_c_bundled"
