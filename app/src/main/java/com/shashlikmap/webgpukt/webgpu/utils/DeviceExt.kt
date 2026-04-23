@@ -9,7 +9,7 @@ import java.nio.ByteBuffer
 class GPUBufferDescriptorInit
 @JvmOverloads constructor(
     /** The allowed usages for the buffer (e.g., vertex, uniform, copy_dst). */
-    @BufferUsage var usage: Int,
+    @BufferUsage.Type var usage: Int,
 
     /** Contents of a buffer on creation. */
     var content: ByteBuffer,
